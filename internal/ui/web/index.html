@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>mergeinternet</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232a78d6' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M3 5c6 0 7 7 12 7h6'/%3E%3Cpath d='M3 12h18'/%3E%3Cpath d='M3 19c6 0 7-7 12-7'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+<script src="app.js" defer></script>
+<script type="module" src="topo3d.js"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-mark" data-icon="logo"></span>
+      <span class="brand-name">mergeinternet</span>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Mục chính">
+      <button class="tab" role="tab" id="tabbtn-overview" data-tab="overview" aria-controls="tab-overview" aria-selected="true">Tổng quan</button>
+      <button class="tab" role="tab" id="tabbtn-settings" data-tab="settings" aria-controls="tab-settings" aria-selected="false" tabindex="-1">Cài đặt</button>
+      <button class="tab" role="tab" id="tabbtn-logs" data-tab="logs" aria-controls="tab-logs" aria-selected="false" tabindex="-1">Nhật ký</button>
+    </nav>
+    <button class="icon-btn" id="theme-toggle" type="button" aria-label="Đổi giao diện sáng / tối" title="Đổi giao diện sáng / tối"></button>
+  </div>
+</header>
+
+<div id="offline" class="offline" hidden>
+  <span data-icon="alert"></span>
+  <span>Mất liên lạc với mi-client. Có thể cửa sổ chương trình đã bị đóng; hãy mở lại <strong>mi-client.exe</strong>.</span>
+</div>
+
+<main>
+  <!-- ============ OVERVIEW ============ -->
+  <section id="tab-overview" class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-overview">
+    <div id="alerts" class="alerts"></div>
+
+    <div class="card hero">
+      <div class="hero-main">
+        <div class="status-line">
+          <span class="status-dot" id="status-dot"></span>
+          <h1 id="status-text">Đang tải…</h1>
+        </div>
+        <p class="hero-sub" id="status-sub"></p>
+        <div class="hero-meta" id="status-meta"></div>
+      </div>
+      <button class="power" id="power-btn" type="button" disabled>
+        <span class="power-icon" data-icon="power"></span>
+        <span class="power-label" id="power-label">Bật kết nối</span>
+      </button>
+    </div>
+
+    <div class="card job-card" id="job-card" hidden aria-live="polite"></div>
+
+    <div class="card setup" id="welcome" hidden>
+      <div class="setup-main">
+        <span class="setup-mark" data-icon="zap"></span>
+        <h2>Gộp mạng chỉ với 1 nút</h2>
+        <p>App tự tìm Wi-Fi/LAN và điện thoại đang cắm (USB hoặc hotspot), tự đo tốc độ từng đường rồi bật. <strong>Không cần VPS, không cần quyền Admin.</strong></p>
+        <button class="btn primary big" type="button" id="setup-local"><span data-icon="power"></span>Bắt đầu ngay</button>
+        <p class="setup-note">Trình duyệt, IDM, Steam… sẽ chia các kết nối ra nhiều đường. Cài đặt proxy của Windows được trả lại như cũ khi bạn tắt.</p>
+      </div>
+      <details class="setup-vps" id="setup-vps">
+        <summary><span data-icon="server"></span><span><strong>Có VPS?</strong> Gộp cả cuộc gọi video, game (tuỳ chọn, VPS khoảng 100–150k/tháng)</span></summary>
+        <div class="vps-forms">
+          <form class="vps-form" id="vps-form" autocomplete="off">
+            <h3>Cài VPS tự động</h3>
+            <p class="muted-text">Nhập IP và mật khẩu root mà nhà cung cấp VPS gửi cho bạn. App tự cài máy chủ, mở cổng và lấy key. Mật khẩu chỉ dùng một lần và <strong>không được lưu</strong>.</p>
+            <div class="field-grid">
+              <label class="field"><span class="field-label">IP của VPS</span><input id="v-host" type="text" placeholder="203.0.113.10" spellcheck="false"></label>
+              <label class="field"><span class="field-label">Mật khẩu root</span><input id="v-pass" type="password" placeholder="Mật khẩu VPS"></label>
+            </div>
+            <details class="vps-adv"><summary>Tài khoản / cổng SSH khác</summary>
+              <div class="field-grid">
+                <label class="field"><span class="field-label">Tài khoản</span><input id="v-user" type="text" placeholder="root" spellcheck="false"></label>
+                <label class="field"><span class="field-label">Cổng SSH</span><input id="v-port" type="number" placeholder="22" min="1" max="65535"></label>
+              </div>
+            </details>
+            <button class="btn primary" type="submit"><span data-icon="server"></span>Cài VPS tự động</button>
+          </form>
+          <form class="vps-form" id="code-form" autocomplete="off">
+            <h3>Đã có máy chủ? Dán mã kết nối</h3>
+            <p class="muted-text">Dòng bắt đầu bằng <code>mi1:</code> do <code>server-setup.sh</code> in ra trên VPS.</p>
+            <label class="field"><span class="field-label">Mã kết nối</span><input id="v-code" type="text" placeholder="mi1:203.0.113.10:51820:…" spellcheck="false"></label>
+            <button class="btn ghost" type="submit">Kết nối bằng mã</button>
+          </form>
+        </div>
+      </details>
+    </div>
+
+    <!-- Main view: the topology (sources -> PC). Details fold under "Nâng cao". -->
+    <div class="card topo-card compact" id="topo-card">
+      <div class="card-head">
+        <div>
+          <h2>Nguồn mạng đang cấp cho PC</h2>
+          <p class="muted-text" id="topo-sub">1 đường chính + tối đa <span class="max-ext">5</span> thiết bị mở rộng (USB hoặc Wi-Fi hotspot)</p>
+        </div>
+        <div class="topo-tools">
+          <span class="flow-key" id="flow-key" hidden><i class="k-dn"></i>tải xuống<i class="k-up"></i>tải lên</span>
+          <span class="live-badge" id="live-badge" hidden><span class="live-dot"></span><span id="live-count">0 nguồn đang cấp mạng</span></span>
+          <div class="seg" role="radiogroup" aria-label="Đơn vị tốc độ" id="unit-seg">
+            <button type="button" role="radio" data-unit="MBps" aria-checked="true">MB/s</button>
+            <button type="button" role="radio" data-unit="Mbps" aria-checked="false">Mbps</button>
+          </div>
+        </div>
+      </div>
+      <div class="topo-body" id="topo-body">
+        <svg class="topo-svg" id="topo-svg" aria-hidden="true"></svg>
+        <div class="topo-sources" id="topo-sources"></div>
+        <div class="topo-pc" id="topo-pc"></div>
+        <div class="topo-labels" id="topo-labels" aria-hidden="true"></div>
+      </div>
+      <div class="topo-foot">
+        <button type="button" class="adv-toggle" id="adv-toggle" aria-expanded="false" aria-controls="live-card">
+          <span data-icon="sliders"></span><span>Nâng cao</span><small>dung lượng · giới hạn · bật/tắt thiết bị · biểu đồ tốc độ</small><span class="chev" data-icon="chevron"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Advanced, while connected: speed history per source. -->
+    <div class="card live-card" id="live-card" hidden>
+      <div class="charts" id="charts">
+        <div class="chart-panel">
+          <div class="chart-title"><strong><span class="ct-ic" data-icon="down"></span>Tải xuống theo từng nguồn</strong><span>2 phút gần nhất · xếp chồng = tổng</span></div>
+          <div class="chart-wrap rx"><svg id="chart-rx" class="chart" tabindex="0" role="img" aria-label="Biểu đồ tải xuống"></svg></div>
+        </div>
+        <div class="chart-panel">
+          <div class="chart-title"><strong><span class="ct-ic" data-icon="up"></span>Tải lên theo từng nguồn</strong><span>thang riêng</span></div>
+          <div class="chart-wrap tx"><svg id="chart-tx" class="chart" role="img" aria-label="Biểu đồ tải lên"></svg></div>
+        </div>
+        <div class="tooltip" id="tooltip" hidden></div>
+      </div>
+      <details class="table-view" id="table-view">
+        <summary>Xem số liệu dạng bảng</summary>
+        <div class="table-scroll" id="chart-table"></div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section id="tab-settings" class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-settings" hidden>
+    <div class="card form-section" id="prefs-card">
+      <div class="section-title"><span class="step-n" data-icon="zap"></span><div><h2>Chế độ kết nối</h2><p class="muted-text">Đổi chế độ áp dụng ở lần bật kết nối tiếp theo.</p></div></div>
+      <div class="mode-cards" role="radiogroup" aria-label="Chế độ kết nối" id="conn-cards">
+        <label class="mode-card">
+          <input type="radio" name="conn" value="local">
+          <span class="mode-icon" data-icon="layers"></span>
+          <span class="mode-text"><strong>Không cần VPS</strong><span>Miễn phí, không cần Admin. Mỗi kết nối đi một đường: tải nhiều luồng nhanh hơn; một kết nối đơn (gọi video, game) không nhanh hơn.</span></span>
+        </label>
+        <label class="mode-card">
+          <input type="radio" name="conn" value="vps">
+          <span class="mode-icon" data-icon="server"></span>
+          <span class="mode-text"><strong>Qua VPS</strong><span id="vps-card-text">Gộp từng gói qua máy chủ của bạn: mọi kết nối đều nhanh hơn. Cần VPS và quyền Admin.</span></span>
+        </label>
+      </div>
+      <div class="prefs-grid">
+        <label class="switch"><input type="checkbox" id="p-autoconnect"><span class="track"></span>Tự bật kết nối khi mở app</label>
+        <label class="switch"><input type="checkbox" id="p-startwin"><span class="track"></span>Khởi động cùng Windows (chạy nền)</label>
+        <label class="switch"><input type="checkbox" id="p-autoadd"><span class="track"></span>Tự thêm điện thoại khi cắm vào</label>
+        <label class="switch"><input type="checkbox" id="p-sticky"><span class="track"></span>Mỗi trang web dùng 1 đường (đăng nhập ổn định hơn, chậm hơn)</label>
+      </div>
+      <div class="vps-tools">
+        <button type="button" class="btn ghost small" id="open-vps-setup"><span data-icon="server"></span>Cài / nâng cấp VPS…</button>
+      </div>
+    </div>
+
+    <form id="settings-form" novalidate>
+      <details class="card form-section advanced" id="server-section">
+        <summary><h2>Máy chủ VPS (nhập tay)</h2><span class="muted-text">Thường không cần: dùng “Cài VPS tự động” hoặc mã kết nối</span></summary>
+        <div class="field-grid">
+          <label class="field">
+            <span class="field-label">Địa chỉ máy chủ</span>
+            <input id="f-server" type="text" placeholder="203.0.113.10:51820" autocomplete="off" spellcheck="false">
+            <small class="field-error" id="e-server"></small>
+          </label>
+          <label class="field">
+            <span class="field-label">Key bí mật</span>
+            <span class="input-group">
+              <input id="f-key" type="password" placeholder="Dán key từ VPS" autocomplete="off" spellcheck="false">
+              <button type="button" class="input-addon" id="key-toggle" aria-label="Hiện key"></button>
+            </span>
+            <small class="field-error" id="e-key"></small>
+          </label>
+        </div>
+      </details>
+
+      <div class="card form-section">
+        <div class="section-title with-action">
+          <span class="step-n" data-icon="layers"></span>
+          <div><h2>Các đường mạng</h2><p class="muted-text">Chọn <strong>1 đường chính</strong> của PC (LAN hoặc Wi-Fi nhà) và tối đa <strong><span class="max-ext">5</span> thiết bị mở rộng</strong> (điện thoại qua USB, hoặc Wi-Fi hotspot khi PC đang dùng LAN; PC có 1 card Wi-Fi thì bắt được 1 hotspot). Mỗi đường cần internet riêng.</p></div>
+          <button type="button" class="btn ghost small" id="refresh-ifs"><span data-icon="refresh"></span>Quét lại</button>
+        </div>
+        <div class="role-summary" id="role-summary" aria-live="polite"></div>
+        <div class="iface-head" aria-hidden="true">
+          <span>Card mạng / thiết bị</span><span>Vai trò</span><span>Tên hiển thị</span><span>Tải xuống</span><span>Tải lên</span>
+        </div>
+        <div id="iface-list" class="iface-list"></div>
+        <small class="field-error" id="e-paths"></small>
+        <label class="check-inline"><input type="checkbox" id="show-all-ifs"> Hiện cả card ảo và card đang tắt</label>
+        <div class="hint">
+          <span data-icon="info"></span>
+          <div><strong>Không cần tự đo.</strong> App tự đo tốc độ thật của từng đường khi bật lần đầu và khi cắm thiết bị mới. Có thể đo lại bất cứ lúc nào; mỗi lần đo dùng khoảng vài chục MB dữ liệu cho mỗi điện thoại.
+            <div class="hint-actions"><button type="button" class="btn ghost small" id="measure-btn"><span data-icon="zap"></span>Đo lại tốc độ ngay</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card form-section">
+        <div class="section-title"><span class="step-n" data-icon="shield"></span><div><h2>Cách gộp (chế độ VPS)</h2></div></div>
+        <div class="mode-cards" role="radiogroup" aria-label="Chế độ">
+          <label class="mode-card">
+            <input type="radio" name="mode" value="aggregate">
+            <span class="mode-icon" data-icon="zap"></span>
+            <span class="mode-text"><strong>Gộp tốc độ</strong><span>Cộng băng thông của tất cả các đường. Dùng hằng ngày, tải file, xem video.</span></span>
+          </label>
+          <label class="mode-card">
+            <input type="radio" name="mode" value="redundant">
+            <span class="mode-icon" data-icon="shield"></span>
+            <span class="mode-text"><strong>Ổn định tối đa</strong><span>Gửi mỗi gói trên mọi đường: ping đều, gần như không rớt. Hợp chơi game, gọi video. Tốn data gấp nhiều lần.</span></span>
+          </label>
+        </div>
+      </div>
+
+      <details class="card form-section advanced">
+        <summary><h2>Nâng cao</h2><span class="muted-text">Chỉ đổi khi cần</span></summary>
+        <div class="field-grid">
+          <label class="field span-2">
+            <span class="field-label">Thời gian chờ xếp lại thứ tự gói: <strong id="v-reorder">60 ms</strong></span>
+            <input id="f-reorder" type="range" min="0" max="300" step="10">
+            <small class="field-help">Bằng khoảng chênh lệch độ trễ giữa đường chậm nhất và nhanh nhất, cộng thêm 20–30 ms. Đặt 0 để tắt.</small>
+          </label>
+          <label class="field">
+            <span class="field-label">MTU</span>
+            <input id="f-mtu" type="number" min="1200" max="1440" step="10">
+            <small class="field-help">Giảm xuống 1280 nếu web bị treo mà ping vẫn được.</small>
+            <small class="field-error" id="e-mtu"></small>
+          </label>
+          <label class="field">
+            <span class="field-label">DNS</span>
+            <input id="f-dns" type="text" placeholder="1.1.1.1, 8.8.8.8" spellcheck="false">
+            <small class="field-error" id="e-dns"></small>
+          </label>
+          <label class="field">
+            <span class="field-label">Địa chỉ trong tunnel</span>
+            <input id="f-tunaddr" type="text" placeholder="10.66.0.2/24" spellcheck="false">
+          </label>
+          <label class="field">
+            <span class="field-label">Gateway trong tunnel</span>
+            <input id="f-tungw" type="text" placeholder="10.66.0.1" spellcheck="false">
+          </label>
+        </div>
+      </details>
+
+      <div class="savebar">
+        <span class="save-state" id="save-state"></span>
+        <button type="button" class="btn ghost" id="reset-btn">Hoàn tác</button>
+        <button type="submit" class="btn primary" id="save-btn">Lưu cấu hình</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ============ LOGS ============ -->
+  <section id="tab-logs" class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-logs" hidden>
+    <div class="card logs-card">
+      <div class="card-head">
+        <div><h2>Nhật ký</h2><p class="muted-text">Các sự kiện gần đây của mi-client. Gửi phần này khi cần hỗ trợ.</p></div>
+        <div class="log-tools">
+          <label class="check-inline"><input type="checkbox" id="log-follow" checked> Tự cuộn</label>
+          <button type="button" class="btn ghost small" id="log-copy"><span data-icon="copy"></span>Sao chép</button>
+        </div>
+      </div>
+      <div class="log-box" id="log-box" tabindex="0" aria-label="Nhật ký" aria-live="off"></div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

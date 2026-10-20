@@ -1,0 +1,18 @@
+{
+  "server": "203.0.113.10:51820",
+  "key": "PASTE-KEY-FROM-server.json",
+  "mode": "aggregate",
+  "reorder_ms": 60,
+  "tun": {
+    "name": "mi0",
+    "address": "10.66.0.2/24",
+    "gateway": "10.66.0.1",
+    "mtu": 1360,
+    "dns": ["1.1.1.1", "8.8.8.8"]
+  },
+  "paths": [
+    { "name": "home",    "interface": "Wi-Fi",      "up_mbps": 40, "down_mbps": 100 },
+    { "name": "android", "interface": "Ethernet 3", "up_mbps": 10, "down_mbps": 40 },
+    { "name": "iphone",  "interface": "Ethernet 4", "up_mbps": 8,  "down_mbps": 30 }
+  ]
+}
